@@ -16,13 +16,14 @@
 #include "application.h"
 #include "settingsdialog.h"
 
-#include <QClipboard>
 #include <QApplication>
+#include <QClipboard>
 #include <QDesktopServices>
+#include <QIcon>
 #include <QLoggingCategory>
 #include <QMessageBox>
+#include <QNetworkInformation>
 #include <QUrlQuery>
-#include <QIcon>
 
 #include "theme.h"
 
@@ -84,4 +85,13 @@ QString Utility::vfsPinActionText()
 QString Utility::vfsFreeSpaceActionText()
 {
     return QCoreApplication::translate("utility", "Free up local space");
+}
+
+bool Utility::internetConnectionIsMetered()
+{
+    if (auto *qNetInfo = QNetworkInformation::instance()) {
+        return qNetInfo->isMetered();
+    }
+
+    return false;
 }

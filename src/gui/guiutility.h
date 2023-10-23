@@ -51,6 +51,7 @@ namespace Utility {
 
     QString socketApiSocketPath();
 
+    bool internetConnectionIsMetered();
 } // namespace Utility
 } // namespace OCC
 

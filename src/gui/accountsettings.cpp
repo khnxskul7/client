@@ -43,6 +43,7 @@
 #include <QIcon>
 #include <QKeySequence>
 #include <QMessageBox>
+#include <QNetworkInformation>
 #include <QPropertyAnimation>
 #include <QSortFilterProxyModel>
 #include <QToolTip>
@@ -687,20 +688,43 @@ void AccountSettings::slotScheduleCurrentFolderForceFullDiscovery()
 
 void AccountSettings::slotForceSyncCurrentFolder()
 {
-    if (auto selectedFolder = this->selectedFolder()) {
-        // Terminate and reschedule any running sync
-        for (auto *folder : FolderMan::instance()->folders()) {
-            if (folder->isSyncRunning()) {
-                folder->slotTerminateSync(tr("User triggered force sync"));
-                FolderMan::instance()->scheduler()->enqueueFolder(folder);
-            }
+    auto isMetered = []() {
+        if (auto qNetInfo = QNetworkInformation::instance()) {
+            return qNetInfo->isMetered();
         }
+        return false;
+    };
 
-        selectedFolder->slotWipeErrorBlacklist(); // issue #6757
-        selectedFolder->slotNextSyncFullLocalDiscovery(); // ensure we don't forget about local errors
-        // Insert the selected folder at the front of the queue
-        FolderMan::instance()->scheduler()->enqueueFolder(selectedFolder, SyncScheduler::Priority::High);
+    if (auto selectedFolder = this->selectedFolder()) {
+        if (isMetered() && ConfigFile().pauseSyncWhenMetered()) {
+            auto messageBox = new QMessageBox(QMessageBox::Question, tr("Internet connection is metered"),
+                tr("Synchronization is paused because the Internet connection is a metered connection"
+                   "<p>Do you really want to force a Synchronization now?"),
+                QMessageBox::Yes | QMessageBox::No, ocApp()->gui()->settingsDialog());
+            messageBox->setAttribute(Qt::WA_DeleteOnClose);
+            connect(messageBox, &QMessageBox::accepted, this, [this, selectedFolder] { doForceSyncCurrentFolder(selectedFolder); });
+            messageBox->open();
+            ownCloudGui::raiseDialog(messageBox);
+        } else {
+            doForceSyncCurrentFolder(selectedFolder);
+        }
     }
+}
+
+void AccountSettings::doForceSyncCurrentFolder(Folder *selectedFolder)
+{
+    // Terminate and reschedule any running sync
+    for (auto *folder : FolderMan::instance()->folders()) {
+        if (folder->isSyncRunning()) {
+            folder->slotTerminateSync(tr("User triggered force sync"));
+            FolderMan::instance()->scheduler()->enqueueFolder(folder);
+        }
+    }
+
+    selectedFolder->slotWipeErrorBlacklist(); // issue #6757
+    selectedFolder->slotNextSyncFullLocalDiscovery(); // ensure we don't forget about local errors
+    // Insert the selected folder at the front of the queue
+    FolderMan::instance()->scheduler()->enqueueFolder(selectedFolder, SyncScheduler::Priority::High);
 }
 
 void AccountSettings::slotAccountStateChanged()
@@ -813,6 +837,9 @@ void AccountSettings::slotAccountStateChanged()
         [[fallthrough]];
     case AccountState::Disconnected:
         showConnectionLabel(tr("Disconnected from: %1.").arg(server));
+        break;
+    case AccountState::PausedDueToMetered:
+        showConnectionLabel(tr("Sync to %1 is paused due to metered internet connection.").arg(server));
         break;
     }
 
