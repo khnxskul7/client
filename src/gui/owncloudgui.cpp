@@ -937,7 +937,7 @@ void ownCloudGui::setPauseOnAllFoldersHelper(const QList<AccountStatePtr> &accou
         if (accounts.contains(f->accountState())) {
             f->setSyncPaused(pause);
             if (pause) {
-                f->slotTerminateSync();
+                f->slotTerminateSync(tr("User paused sync for account '%1'").arg(f->accountState()->account()->displayName()));
             }
         }
     }

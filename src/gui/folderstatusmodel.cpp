@@ -934,7 +934,7 @@ void FolderStatusModel::slotApplySelectiveSync()
         const auto changes = (oldBlackListSet - blackListSet) + (blackListSet - oldBlackListSet);
         if (!changes.isEmpty()) {
             if (folder->isSyncRunning()) {
-                folder->slotTerminateSync();
+                folder->slotTerminateSync(tr("Selective sync list changed"));
             }
             //The part that changed should not be read from the DB on next sync because there might be new folders
             // (the ones that are no longer in the blacklist)
@@ -1215,7 +1215,7 @@ void FolderStatusModel::slotSyncAllPendingBigFolders()
 
         // Trigger a sync
         if (folder->isSyncRunning()) {
-            folder->slotTerminateSync();
+            folder->slotTerminateSync(tr("User triggered sync-all for selective synced folder"));
         }
         // The part that changed should not be read from the DB on next sync because there might be new folders
         // (the ones that are no longer in the blacklist)

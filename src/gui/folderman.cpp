@@ -389,7 +389,7 @@ void FolderMan::slotIsConnectedChanged()
             if (f
                 && f->isSyncRunning()
                 && f->accountState() == accountState) {
-                f->slotTerminateSync();
+                f->slotTerminateSync(tr("Account disconnected or paused"));
             }
         }
     }
@@ -604,7 +604,7 @@ void FolderMan::removeFolder(Folder *f)
     const bool currentlyRunning = f->isSyncRunning();
     if (currentlyRunning) {
         // abort the sync now
-        f->slotTerminateSync();
+        f->slotTerminateSync(tr("Folder is about to be removed"));
     }
 
     f->setSyncPaused(true);

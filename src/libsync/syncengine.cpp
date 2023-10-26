@@ -84,7 +84,7 @@ SyncEngine::SyncEngine(AccountPtr account, const QUrl &baseUrl, const QString &l
 SyncEngine::~SyncEngine()
 {
     _goingDown = true;
-    abort();
+    abort(tr("application exit", "abort reason"));
     _excludedFiles.reset();
 }
 
@@ -855,10 +855,11 @@ bool SyncEngine::shouldDiscoverLocally(const QString &path) const
     return false;
 }
 
-void SyncEngine::abort()
+void SyncEngine::abort(const QString &reason)
 {
-    if (_propagator)
-        qCInfo(lcEngine) << "Aborting sync";
+    if (_propagator) {
+        qCInfo(lcEngine) << "Aborting sync:" << reason;
+    }
 
     if (_propagator) {
         // If we're already in the propagation phase, aborting that is sufficient
@@ -870,7 +871,7 @@ void SyncEngine::abort()
         _discoveryPhase.release()->deleteLater();
 
         if (!_goingDown) {
-            Q_EMIT syncError(tr("Aborted"));
+            Q_EMIT syncError(tr("Aborted due to %1").arg(reason));
         }
         finalize(false);
     }
