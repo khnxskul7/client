@@ -6,54 +6,69 @@ from pageObjects.AccountConnectionWizard import AccountConnectionWizard
 
 
 class EnterPassword:
+    LOGIN_DIALOG = {
+        "name": "LoginRequiredDialog",
+        "type": "OCC::LoginRequiredDialog",
+        "visible": 1,
+    }
+    USERNAME_BOX = {
+        "name": "usernameLineEdit",
+        "type": "QLineEdit",
+        "visible": 1,
+        "window": LOGIN_DIALOG,
+    }
     PASSWORD_BOX = {
-        "container": names.loginRequiredDialog_contentWidget_QStackedWidget,
         "name": "passwordLineEdit",
         "type": "QLineEdit",
         "visible": 1,
+        "window": LOGIN_DIALOG,
     }
     LOGIN_BUTTON = {
         "text": "Log in",
         "type": "QPushButton",
         "unnamed": 1,
         "visible": 1,
-        "window": names.loginRequiredDialog_OCC_LoginRequiredDialog,
+        "window": LOGIN_DIALOG,
     }
     COPY_URL_TO_CLIPBOARD_BUTTON = {
-        "container": names.loginRequiredDialog_contentWidget_QStackedWidget,
         "name": "copyUrlToClipboardButton",
         "type": "QPushButton",
         "visible": 1,
+        "window": LOGIN_DIALOG,
     }
 
-    @staticmethod
-    def enterPassword(password):
-        squish.waitForObject(
-            EnterPassword.PASSWORD_BOX, get_config('maxSyncTimeout') * 1000
-        )
-        squish.type(squish.waitForObject(EnterPassword.PASSWORD_BOX), password)
-        squish.clickButton(squish.waitForObject(EnterPassword.LOGIN_BUTTON))
+    def __init__(self, occurrence=1):
+        if occurrence > 1:
+            self.LOGIN_DIALOG.update({"occurrence": occurrence})
 
-    @staticmethod
-    def oidcReLogin(username, password):
+    def get_username(self):
+        return str(squish.waitForObjectExists(self.USERNAME_BOX).text)
+
+    def enterPassword(self, password):
+        squish.waitForObjectExists(
+            self.PASSWORD_BOX, get_config('maxSyncTimeout') * 1000
+        )
+        squish.type(
+            squish.waitForObject(self.PASSWORD_BOX),
+            password,
+        )
+        squish.clickButton(squish.waitForObjectExists(self.LOGIN_BUTTON))
+
+    def oidcReLogin(self, username, password):
         # wait 500ms for copy button to fully load
         squish.snooze(1 / 2)
-        squish.clickButton(
-            squish.waitForObject(EnterPassword.COPY_URL_TO_CLIPBOARD_BUTTON)
-        )
+        squish.clickButton(squish.waitForObject(self.COPY_URL_TO_CLIPBOARD_BUTTON))
         authorize_via_webui(username, password)
 
-    @staticmethod
-    def reLogin(username, password):
+    def reLogin(self, username, password):
         if get_config('ocis'):
-            EnterPassword.oidcReLogin(username, password)
+            self.oidcReLogin(username, password)
         else:
-            EnterPassword.enterPassword(password)
+            self.enterPassword(password)
 
-    @staticmethod
-    def loginAfterSetup(username, password):
+    def loginAfterSetup(self, username, password):
         if get_config('ocis'):
             AccountConnectionWizard.acceptCertificate()
-            EnterPassword.oidcReLogin(username, password)
+            self.oidcReLogin(username, password)
         else:
-            EnterPassword.enterPassword(password)
+            self.enterPassword(password)
