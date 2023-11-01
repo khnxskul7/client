@@ -50,7 +50,8 @@ def step(context, displayname, host):
 def step(context, username):
     password = getPasswordForUser(username)
     setUpClient(username)
-    EnterPassword.loginAfterSetup(username, password)
+    enter_password = EnterPassword()
+    enter_password.loginAfterSetup(username, password)
 
     # wait for files to sync
     waitForInitialSyncToComplete(getResourcePath('/', username))

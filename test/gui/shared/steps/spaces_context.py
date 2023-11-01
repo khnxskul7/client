@@ -39,7 +39,8 @@ def step(context, user, space_name, role):
 def step(context, user, space_name):
     password = getPasswordForUser(user)
     setUpClient(user, space_name)
-    EnterPassword.loginAfterSetup(user, password)
+    enter_password = EnterPassword()
+    enter_password.loginAfterSetup(user, password)
     # wait for files to sync
     waitForInitialSyncToComplete(getResourcePath('/', user, space_name))
 
