@@ -2,7 +2,7 @@ import names
 import squish
 from helpers.WebUIHelper import authorize_via_webui
 from helpers.ConfigHelper import get_config
-from pageObjects.AccountConnectionWizard import AccountConnectionWizard
+from helpers.UserHelper import getDisplaynameForUser, getPasswordForUser
 
 
 class EnterPassword:
@@ -10,6 +10,12 @@ class EnterPassword:
         "name": "LoginRequiredDialog",
         "type": "OCC::LoginRequiredDialog",
         "visible": 1,
+    }
+    LOGIN_USER_LABEL = {
+        "name": "topLabel",
+        "type": "QLabel",
+        "visible": 1,
+        "window": LOGIN_DIALOG,
     }
     USERNAME_BOX = {
         "name": "usernameLineEdit",
@@ -36,13 +42,32 @@ class EnterPassword:
         "visible": 1,
         "window": LOGIN_DIALOG,
     }
+    TLS_CERT_WINDOW = {
+        "name": "OCC__TlsErrorDialog",
+        "type": "OCC::TlsErrorDialog",
+        "visible": 1,
+    }
+    ACCEPT_CERTIFICATE_YES = {
+        "text": "Yes",
+        "type": "QPushButton",
+        "visible": 1,
+        "window": TLS_CERT_WINDOW,
+    }
 
     def __init__(self, occurrence=1):
-        if occurrence > 1:
+        if occurrence > 1 and not get_config('ocis'):
             self.LOGIN_DIALOG.update({"occurrence": occurrence})
+        elif occurrence > 1 and get_config('ocis'):
+            self.TLS_CERT_WINDOW.update({"occurrence": occurrence})
 
     def get_username(self):
-        return str(squish.waitForObjectExists(self.USERNAME_BOX).text)
+        # Parse username from following label:
+        #   Please enter your password to log in to the account Alice Hansen@localhost.
+        #   The account Alice Hansen@localhost:9200 is currently logged out.
+        label = str(squish.waitForObjectExists(self.LOGIN_USER_LABEL).text)
+        label = label.split("@", maxsplit=1)[0].split(" ")
+        label.reverse()
+        return label[1].capitalize()
 
     def enterPassword(self, password):
         squish.waitForObjectExists(
@@ -66,9 +91,16 @@ class EnterPassword:
         else:
             self.enterPassword(password)
 
-    def loginAfterSetup(self, username, password):
+    def loginAfterSetup(self, username=None, password=None):
         if get_config('ocis'):
-            AccountConnectionWizard.acceptCertificate()
+            self.accept_certificate()
+        if not username:
+            username = self.get_username()
+            password = getPasswordForUser(username)
+        if get_config('ocis'):
             self.oidcReLogin(username, password)
         else:
             self.enterPassword(password)
+
+    def accept_certificate(self):
+        squish.clickButton(squish.waitForObject(self.ACCEPT_CERTIFICATE_YES))

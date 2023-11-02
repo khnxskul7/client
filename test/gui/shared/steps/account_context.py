@@ -68,8 +68,7 @@ def step(context):
         listenSyncStatusForItem(sync_path)
         # login from last dialog
         enter_password = EnterPassword(len(sync_paths) - idx)
-        username = enter_password.get_username().capitalize()
-        enter_password.loginAfterSetup(username, getPasswordForUser(username))
+        enter_password.loginAfterSetup()
         # wait for files to sync
         waitForInitialSyncToComplete(sync_path)
 
@@ -125,7 +124,8 @@ def step(context, username):
 def step(context, username):
     AccountSetting.login()
     password = getPasswordForUser(username)
-    EnterPassword.reLogin(username, password)
+    enter_password = EnterPassword()
+    enter_password.reLogin(username, password)
 
     # wait for files to sync
     waitForInitialSyncToComplete(getResourcePath('/', username))
@@ -138,7 +138,8 @@ def step(context, username):
 
 @When('user "|any|" enters the password "|any|"')
 def step(context, username, password):
-    EnterPassword.reLogin(username, password)
+    enter_password = EnterPassword()
+    enter_password.reLogin(username, password)
 
 
 @Then('user "|any|" should be connect to the client-UI')
