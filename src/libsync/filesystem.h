@@ -99,6 +99,12 @@ namespace FileSystem {
         RemoveEntryList *success,
         RemoveEntryList *locked,
         RemoveErrorList *errors);
+
+    namespace Tags {
+        std::optional<QByteArray> OWNCLOUDSYNC_EXPORT get(const QString &path, const QString &key);
+        bool OWNCLOUDSYNC_EXPORT set(const QString &path, const QString &key, const QByteArray &value);
+        bool OWNCLOUDSYNC_EXPORT remove(const QString &path, const QString &key);
+    }
 }
 
 /** @} */
