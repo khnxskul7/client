@@ -51,6 +51,10 @@ namespace Utility {
 
     QString socketApiSocketPath();
 
+    void setDirectiryTag(const QString &path);
+    QString getDirectiryTag(const QString &path);
+    void removeDirectoryTag(const QString &path);
+
 } // namespace Utility
 } // namespace OCC
 

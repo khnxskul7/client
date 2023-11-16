@@ -16,6 +16,8 @@
 
 #include "accountconfiguredsetupwizardstate.h"
 #include "gui/folderman.h"
+#include "gui/guiutility.h"
+#include "libsync/filesystem.h"
 #include "pages/accountconfiguredwizardpage.h"
 #include "theme.h"
 
@@ -88,6 +90,12 @@ void AccountConfiguredSetupWizardState::evaluatePage()
         QString invalidPathErrorMessage = FolderMan::checkPathValidityRecursive(syncTargetDir);
         if (!invalidPathErrorMessage.isEmpty()) {
             Q_EMIT evaluationFailed(errorMessageTemplate.arg(invalidPathErrorMessage));
+            return;
+        }
+
+        auto existingTag = Utility::getDirectiryTag(syncTargetDir);
+        if (!existingTag.isEmpty()) {
+            Q_EMIT evaluationFailed(tr("Folder is already is use by application %1").arg(existingTag));
             return;
         }
     }

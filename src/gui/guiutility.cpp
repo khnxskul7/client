@@ -27,6 +27,7 @@
 #include "theme.h"
 
 #include "common/asserts.h"
+#include "libsync/filesystem.h"
 
 namespace OCC {
 Q_LOGGING_CATEGORY(lcGuiUtility, "gui.utility", QtInfoMsg)
@@ -84,4 +85,30 @@ QString Utility::vfsPinActionText()
 QString Utility::vfsFreeSpaceActionText()
 {
     return QCoreApplication::translate("utility", "Free up local space");
+}
+
+static const QString dirTag = QStringLiteral("com.owncloud.spaces.app");
+
+void Utility::setDirectiryTag(const QString &path)
+{
+    if (!FileSystem::Tags::set(path, dirTag, Theme::instance()->orgDomainName().toUtf8())) {
+        qCWarning(lcGuiUtility) << "Failed to set tag on" << path;
+    }
+}
+
+QString Utility::getDirectiryTag(const QString &path)
+{
+    auto existingValue = FileSystem::Tags::get(path, dirTag);
+    if (existingValue.has_value()) {
+        return QString::fromUtf8(existingValue.value());
+    }
+
+    return {};
+}
+
+void Utility::removeDirectoryTag(const QString &path)
+{
+    if (!FileSystem::Tags::remove(path, dirTag)) {
+        qCWarning(lcGuiUtility) << "Failed to remove tag on" << path;
+    }
 }
